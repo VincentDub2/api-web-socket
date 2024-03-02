@@ -24,10 +24,39 @@ public class GameService {
     public synchronized void moveCar(String carId, int direction) {
         Car car = findCarById(carId);
         if (car != null) {
-            // Calculer la nouvelle position en fonction de la direction
-            // Vérifier les collisions avec les murs ou les pièces
-            // Mettre à jour la position de la voiture si aucun mur n'est touché
-            // Collecter les pièces si possible et mettre à jour le score
+            int x = car.getX();
+            int y = car.getY();
+
+            // On calcule la nouvelle position du joueur
+            switch (direction) {
+                case 0:
+                    y -= car.getSpeed();
+                    break;
+                case 1:
+                    x += car.getSpeed();
+                    break;
+                case 2:
+                    y += car.getSpeed();
+                    break;
+                case 3:
+                    x -= car.getSpeed();
+                    break;
+            }
+
+            // On vérifie si la nouvelle position est valide
+            if (x >= 0 && x < 800 && y >= 0 && y < 600 && !gameMap.isWall(x, y)) {
+                car.setX(x);
+                car.setY(y);
+                // On vérifie si le joueur a ramassé une pièce
+                if (gameMap.isCoin(x, y)) {
+                    car.setScore(car.getScore() + 1);
+                    // On marque la pièce comme ramassée
+                    gameMap.setCoinCollected(x, y, true);
+                }
+            }
+
+
+
         }
     }
 

@@ -6,6 +6,7 @@ import jakarta.inject.Inject;
 import jakarta.websocket.*;
 import jakarta.websocket.server.ServerEndpoint;
 import org.acme.game.GameService;
+import org.acme.game.models.Car;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -21,6 +22,8 @@ public class WebSocketServer {
     @OnOpen
     public void onOpen(Session session) {
         sessions.put(session.getId(), session);
+        // Créer et assigner une nouvelle voiture au joueur
+        Car newCar = gameService.addNewCar(session.getId());
         // Envoyer l'état initial du jeu au client connecté
     }
 
@@ -28,6 +31,7 @@ public class WebSocketServer {
     public void onClose(Session session) {
         sessions.remove(session.getId());
         // Gérer la déconnexion du client
+        gameService.removeCar(session.getId());
     }
 
     @OnError

@@ -21,6 +21,16 @@ public class GameService {
 
     }
 
+    public Car addNewCar(String id) {
+        Car car = new Car(id,0,0);
+        cars.add(car);
+        return car;
+    }
+
+    public void removeCar(String id) {
+        cars.removeIf(car -> car.getId().equals(id));
+    }
+
     public synchronized void moveCar(String carId, int direction) {
         Car car = findCarById(carId);
         if (car != null) {

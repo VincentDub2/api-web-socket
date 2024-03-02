@@ -1,11 +1,9 @@
 package org.acme.game;
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.enterprise.context.ApplicationScoped;
-import org.acme.game.models.Car;
-import org.acme.game.models.Coin;
-import org.acme.game.models.Map;
-import org.acme.game.models.Wall;
+import org.acme.game.models.*;
 
 
 import java.util.ArrayList;
@@ -13,11 +11,38 @@ import java.util.List;
 
 @ApplicationScoped
 public class GameService {
-    private Map gameMap;
-    private List<Car> cars = new ArrayList<>();
+    private final Map gameMap;
+    private final List<Car> cars = new ArrayList<>();
 
     public GameService() {
-        // Initialiser la carte, les murs, et les pièces ici (voir les classes Wall, Coin et Map)
+        // Ici, vous pouvez initialiser la carte du jeu, les voitures, etc.
+        List<Wall> walls = new ArrayList<>();
+        walls.add(new Wall(100, 100));
+        walls.add(new Wall(200, 100));
+        walls.add(new Wall(300, 100));
+        walls.add(new Wall(400, 100));
+        walls.add(new Wall(500, 100));
+        walls.add(new Wall(600, 100));
+        walls.add(new Wall(700, 100));
+        walls.add(new Wall(100, 200));
+        walls.add(new Wall(100, 300));
+        walls.add(new Wall(100, 400));
+        walls.add(new Wall(100, 500));
+        walls.add(new Wall(200, 500));
+        walls.add(new Wall(300, 500));
+        walls.add(new Wall(400, 500));
+        walls.add(new Wall(500, 500));
+        walls.add(new Wall(600, 500));
+        walls.add(new Wall(700, 500));
+        walls.add(new Wall(700, 200));
+        walls.add(new Wall(700, 300));
+        walls.add(new Wall(700, 400));
+        gameMap = new Map(walls, new ArrayList<>());
+
+        // Ajout de pièces
+        for (int i = 0; i < 10; i++) {
+            gameMap.coins().add(new Coin((int) (Math.random() * 800), (int) (Math.random() * 600)));
+        }
 
     }
 
@@ -70,9 +95,33 @@ public class GameService {
         }
     }
 
+    public String getInitialState(String sessionId) {
+
+        System.out.println("Getting initial state for session: " + sessionId);
+
+        InitialGameState initialState = new InitialGameState();
+
+        // Ici, vous remplissez l'état avec les données actuelles
+        initialState.setCars(cars);
+
+        initialState.setWalls(gameMap.walls());
+
+        initialState.setCoins(gameMap.coins());
+
+        initialState.setPlayerCar(findCarById(sessionId));
+
+        // Sérialisation en JSON
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            return mapper.writeValueAsString(initialState);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "{}"; // En cas d'erreur, retournez un objet vide (ou gérer l'erreur d'une autre manière)
+        }
+    }
+
     private Car findCarById(String id) {
         return cars.stream().filter(car -> car.getId().equals(id)).findFirst().orElse(null);
     }
 
-    // Autres méthodes utiles (ajout de voiture, gestion des collisions, etc.)
 }

@@ -24,7 +24,12 @@ public class WebSocketServer {
         sessions.put(session.getId(), session);
         // Créer et assigner une nouvelle voiture au joueur
         Car newCar = gameService.addNewCar(session.getId());
+        System.out.println("New car created with id: " + newCar.getId());
         // Envoyer l'état initial du jeu au client connecté
+        String initialState = gameService.getInitialState(session.getId());
+
+        System.out.println("Sending initial state to client: " + initialState);
+        session.getAsyncRemote().sendText(initialState);
     }
 
     @OnClose

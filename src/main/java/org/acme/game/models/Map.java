@@ -9,4 +9,22 @@ public class Map {
         this.coins = coins;
     }
 
+    public boolean isWall(int x, int y) {
+        for (Wall wall : walls) {
+            if (wall.getX() == x && wall.getY() == y) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean isCoin(int x, int y) {
+        for (Coin coin : coins) {
+            if (coin.getX() == x && coin.getY() == y && !coin.isCollected()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 }

@@ -27,4 +27,12 @@ public class Map {
         return false;
     }
 
+    public void setCoinCollected(int x, int y, boolean collected) {
+        for (Coin coin : coins) {
+            if (coin.getX() == x && coin.getY() == y) {
+                coin.setCollected(collected);
+            }
+        }
+    }
+
 }

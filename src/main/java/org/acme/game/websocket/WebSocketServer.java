@@ -1,12 +1,15 @@
 package org.acme.game.websocket;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.websocket.*;
 import jakarta.websocket.server.ServerEndpoint;
 import org.acme.game.GameService;
 import org.acme.game.models.Car;
+import org.acme.game.models.GameStateChange;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -53,11 +56,14 @@ public class WebSocketServer {
             int direction;
             try {
                 direction = Integer.parseInt(parts[1]);
-                gameService.moveCar(carId, direction);
+                GameStateChange change = gameService.moveCar(carId, direction);
 
-                // Après avoir déplacé la voiture, envoyez l'état mis à jour à tous les clients
-                String gameState = "L'état mis à jour du jeu"; // Ici, vous devriez générer l'état actuel du jeu
-                broadcast(gameState);
+                if (change != null) {
+                    String jsonChange = convertChangeToJson(change);
+                    System.out.println("Sending change to clients: " + jsonChange);
+                    broadcast(jsonChange);
+                }else session.getAsyncRemote().sendText("No change detected for carId: " + carId + " and direction: " + direction + ".");
+
             } catch (NumberFormatException e) {
                 session.getAsyncRemote().sendText("Message invalide. Format attendu: 'carId:direction'.");
             }
@@ -69,9 +75,19 @@ public class WebSocketServer {
         sessions.values().forEach(s -> {
             s.getAsyncRemote().sendObject(message, result -> {
                 if (result.getException() != null) {
-                    // Gérer les erreurs d'envoi de message
+                    System.out.println("Erreur lors de l'envoi du message: " + result.getException());
                 }
             });
         });
+    }
+
+    private String convertChangeToJson(GameStateChange change) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.writeValueAsString(change);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return "{}";
+        }
     }
 }

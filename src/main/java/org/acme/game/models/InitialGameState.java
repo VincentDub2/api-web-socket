@@ -5,7 +5,6 @@ public class InitialGameState {
     private List<Wall> walls;
     private List<Coin> coins;
     private Car playerCar;
-
     public InitialGameState() {
     }
 

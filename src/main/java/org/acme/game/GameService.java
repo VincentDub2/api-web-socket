@@ -47,7 +47,7 @@ public class GameService {
     }
 
     public Car addNewCar(String id) {
-        Car car = new Car(id,0,0);
+        Car car = new Car(id,(int) (Math.random() * 800),(int) (Math.random() * 600));
         cars.add(car);
         return car;
     }
@@ -56,7 +56,7 @@ public class GameService {
         cars.removeIf(car -> car.getId().equals(id));
     }
 
-    public synchronized void moveCar(String carId, int direction) {
+    public synchronized GameStateChange moveCar(String carId, int direction) {
         Car car = findCarById(carId);
         if (car != null) {
             int x = car.getX();
@@ -88,11 +88,10 @@ public class GameService {
                     // On marque la pièce comme ramassée
                     gameMap.setCoinCollected(x, y, true);
                 }
+                return new GameStateChange(carId, x, y, car.getScore());
             }
-
-
-
         }
+        return null;
     }
 
     public String getInitialState(String sessionId) {

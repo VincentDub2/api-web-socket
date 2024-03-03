@@ -3,40 +3,33 @@ package org.acme.game;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
 import org.acme.game.models.*;
+import org.acme.game.models.gameEvent.*;
 
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
 @ApplicationScoped
 public class GameService {
+
+    @Inject
+    Event<GameEventMessage> gameEvent;
+
+    public void triggerEvent(GameEventMessage event) {
+        System.out.println("Triggering event: " + event);
+        gameEvent.fire(event);
+    }
     private final Map gameMap;
     private final List<Car> cars = new ArrayList<>();
 
     public GameService() {
         // Ici, vous pouvez initialiser la carte du jeu, les voitures, etc.
         List<Wall> walls = new ArrayList<>();
-        walls.add(new Wall(100, 100));
-        walls.add(new Wall(200, 100));
-        walls.add(new Wall(300, 100));
-        walls.add(new Wall(400, 100));
-        walls.add(new Wall(500, 100));
-        walls.add(new Wall(600, 100));
-        walls.add(new Wall(700, 100));
-        walls.add(new Wall(100, 200));
-        walls.add(new Wall(100, 300));
-        walls.add(new Wall(100, 400));
-        walls.add(new Wall(100, 500));
-        walls.add(new Wall(200, 500));
-        walls.add(new Wall(300, 500));
-        walls.add(new Wall(400, 500));
-        walls.add(new Wall(500, 500));
-        walls.add(new Wall(600, 500));
-        walls.add(new Wall(700, 500));
-        walls.add(new Wall(700, 200));
-        walls.add(new Wall(700, 300));
-        walls.add(new Wall(700, 400));
+        walls.add(new Wall(100, 100, 200, 20));
         gameMap = new Map(walls, new ArrayList<>());
 
         // Ajout de pièces
@@ -56,43 +49,61 @@ public class GameService {
         cars.removeIf(car -> car.getId().equals(id));
     }
 
-    public synchronized GameStateChange moveCar(String carId, int direction) {
+    public synchronized void moveCar(String carId, int direction) {
         Car car = findCarById(carId);
         if (car != null) {
-            int x = car.getX();
-            int y = car.getY();
+            int newX = car.getX();
+            int newY = car.getY();
 
-            // On calcule la nouvelle position du joueur
+            // Calcule la nouvelle position en fonction de la direction et de la vitesse
             switch (direction) {
-                case 0:
-                    y -= car.getSpeed();
-                    break;
-                case 1:
-                    x += car.getSpeed();
-                    break;
-                case 2:
-                    y += car.getSpeed();
-                    break;
-                case 3:
-                    x -= car.getSpeed();
-                    break;
+                case 0: newY -= car.getSpeed(); break;
+                case 1: newX += car.getSpeed(); break;
+                case 2: newY += car.getSpeed(); break;
+                case 3: newX -= car.getSpeed(); break;
             }
 
-            // On vérifie si la nouvelle position est valide
-            if (x >= 0 && x < 800 && y >= 0 && y < 600 && !gameMap.isWall(x, y)) {
-                car.setX(x);
-                car.setY(y);
-                // On vérifie si le joueur a ramassé une pièce
-                if (gameMap.isCoin(x, y)) {
-                    car.setScore(car.getScore() + 1);
-                    // On marque la pièce comme ramassée
-                    gameMap.setCoinCollected(x, y, true);
+            Rectangle futureHitbox = new Rectangle(newX, newY,car.getWidth(),car.getHeight());
+
+            for (Wall wall : gameMap.getWalls()) {
+                Rectangle wallHitbox = new Rectangle(wall.getX(), wall.getY(), wall.getWidth(), wall.getHeight());
+                if (intersects(futureHitbox, wallHitbox)) {
+                    System.out.println("Car hit a wall");
+                return;
                 }
-                return new GameStateChange(carId, x, y, car.getScore());
             }
+
+            for (Coin coin : gameMap.getCoins()) {
+                if (coin.isCollected()) {
+                    continue;
+                }
+                Rectangle coinHitbox = new Rectangle(coin.getX(), coin.getY(), coin.getWidth(), coin.getHeight());
+                if (intersects(futureHitbox, coinHitbox)) {
+                    System.out.println("Car collected a coin");
+                    CoinCollectionData coinCollectionData = new CoinCollectionData(coin.getId(),true);
+                    CoinCollectionEvent coinCollectionEvent = new CoinCollectionEvent(coinCollectionData);
+                    triggerEvent(coinCollectionEvent);
+                    coin.setCollected(true);
+                    car.setScore(car.getScore() + 1);
+
+                }
+            }
+
+            car.setX(newX);
+            car.setY(newY);
+
+            MovementData movementData = new MovementData(carId, newX, newY, car.getScore());
+            MovementEvent movementEvent = new MovementEvent(movementData);
+            triggerEvent(movementEvent);
+
         }
-        return null;
     }
+
+    public boolean intersects(Rectangle r1, Rectangle r2) {
+        return r1.x < r2.x + r2.width && r1.x + r1.width > r2.x &&
+                r1.y < r2.y + r2.height && r1.y + r1.height > r2.y;
+    }
+
 
     public String getInitialState(String sessionId) {
 
@@ -111,6 +122,7 @@ public class GameService {
 
         // Sérialisation en JSON
         ObjectMapper mapper = new ObjectMapper();
+
         try {
             return mapper.writeValueAsString(initialState);
         } catch (Exception e) {

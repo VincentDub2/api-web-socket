@@ -1,5 +1,9 @@
 package org.acme.game.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import java.awt.*;
+
 public class Car {
     private String id;
     private int x;
@@ -8,6 +12,8 @@ public class Car {
     private int speed;
     private int direction; // 0: north, 1: east, 2: south, 3: west
     private int score;
+    private int width;
+    private int height;
 
     public String getId() {
         return id;
@@ -57,13 +63,35 @@ public class Car {
         this.score = score;
     }
 
+    @JsonIgnore
+    public Rectangle getHitbox() {
+        return new Rectangle(this.x, this.y, this.width, this.height);
+    }
+
+    public int getHeight() {
+        return height;
+    }
+
+    public void setHeight(int height) {
+        this.height = height;
+    }
+
+    public int getWidth() {
+        return width;
+    }
+
+    public void setWidth(int width) {
+        this.width = width;
+    }
 
     public Car(String id, int x, int y) {
         this.id = id;
         this.x = x;
         this.y = y;
-        this.speed = 1; // Initial speed
+        this.speed = 20; // Initial speed
         this.direction = 0; // Initial direction facing north
         this.score = 0;
+        this.width = 30;
+        this.height = 15;
     }
 }

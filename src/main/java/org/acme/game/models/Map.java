@@ -12,6 +12,14 @@ public record Map(List<Wall> walls, List<Coin> coins) {
         return false;
     }
 
+    public List<Wall> getWalls() {
+        return walls;
+    }
+
+    public List<Coin> getCoins() {
+        return coins;
+    }
+
     public boolean isCoin(int x, int y) {
         for (Coin coin : coins) {
             if (coin.getX() == x && coin.getY() == y && !coin.isCollected()) {

@@ -4,12 +4,15 @@ package org.acme.game.websocket;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import jakarta.websocket.*;
 import jakarta.websocket.server.ServerEndpoint;
 import org.acme.game.GameService;
 import org.acme.game.models.Car;
-import org.acme.game.models.GameStateChange;
+import org.acme.game.models.GameEvent;
+import org.acme.game.models.GameStateCarChange;
+import org.acme.game.models.gameEvent.GameEventMessage;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -21,6 +24,10 @@ public class WebSocketServer {
     Map<String, Session> sessions = new ConcurrentHashMap<>();
     @Inject
     GameService gameService;
+
+    public void onGameEvent(@Observes GameEventMessage event) {
+        broadcast(event);
+    }
 
     @OnOpen
     public void onOpen(Session session) {
@@ -56,13 +63,7 @@ public class WebSocketServer {
             int direction;
             try {
                 direction = Integer.parseInt(parts[1]);
-                GameStateChange change = gameService.moveCar(carId, direction);
-
-                if (change != null) {
-                    String jsonChange = convertChangeToJson(change);
-                    System.out.println("Sending change to clients: " + jsonChange);
-                    broadcast(jsonChange);
-                }else session.getAsyncRemote().sendText("No change detected for carId: " + carId + " and direction: " + direction + ".");
+                gameService.moveCar(carId, direction);
 
             } catch (NumberFormatException e) {
                 session.getAsyncRemote().sendText("Message invalide. Format attendu: 'carId:direction'.");
@@ -70,18 +71,32 @@ public class WebSocketServer {
         }
     }
 
-    // Méthode pour envoyer des messages à tous les clients connectés
-    public void broadcast(String message) {
-        sessions.values().forEach(s -> {
-            s.getAsyncRemote().sendObject(message, result -> {
+    public void broadcast(Object message) {
+
+        String jsonMessage;
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            jsonMessage = mapper.writeValueAsString(message);
+            System.out.println("Broadcasting message: " + jsonMessage);
+        } catch (JsonProcessingException e) {
+            System.err.println("Erreur lors de la conversion du message en JSON : " + e.getMessage());
+            jsonMessage = "{\"error\":\"Problème interne du serveur\"}";
+        }
+
+        final String finalJsonMessage = jsonMessage;
+
+        // Envoi du message JSON à tous les clients connectés
+        sessions.values().forEach(session -> {
+            session.getAsyncRemote().sendText(finalJsonMessage, result -> {
                 if (result.getException() != null) {
-                    System.out.println("Erreur lors de l'envoi du message: " + result.getException());
+                    System.err.println("Erreur lors de l'envoi du message : " + result.getException().getMessage());
                 }
             });
         });
     }
 
-    private String convertChangeToJson(GameStateChange change) {
+
+    private String convertChangeToJson(GameStateCarChange change) {
         try {
             ObjectMapper mapper = new ObjectMapper();
             return mapper.writeValueAsString(change);
@@ -90,4 +105,21 @@ public class WebSocketServer {
             return "{}";
         }
     }
+
+    public void sendToClient(String sessionId, Object message) {
+        Session session = sessions.get(sessionId);
+        if (session != null) {
+            try {
+                String jsonMessage = new ObjectMapper().writeValueAsString(message);
+                session.getAsyncRemote().sendText(jsonMessage);
+            } catch (JsonProcessingException e) {
+                System.err.println("Erreur lors de la conversion du message en JSON : " + e.getMessage());
+                // Gérer l'erreur, par exemple, en envoyant un message d'erreur générique au client
+                session.getAsyncRemote().sendText("{\"error\":\"Problème interne du serveur\"}");
+            }
+        } else {
+            System.err.println("Tentative d'envoi de message à une session inexistante : " + sessionId);
+        }
+    }
+
 }

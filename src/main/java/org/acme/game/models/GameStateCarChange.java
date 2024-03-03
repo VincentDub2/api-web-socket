@@ -1,24 +1,26 @@
 package org.acme.game.models;
 
-public class GameStateChange {
+public class GameStateCarChange {
     private String carId;
     private int newX;
     private int newY;
     private int newScore;
-    public GameStateChange(String carId, int newX, int newY, int newScore) {
+    public GameStateCarChange(String carId, int newX, int newY, int newScore) {
         this.carId = carId;
         this.newX = newX;
         this.newY = newY;
         this.newScore = newScore;
     }
 
-    public GameStateChange(String carId, int newX, int newY) {
+
+
+    public GameStateCarChange(String carId, int newX, int newY) {
         this.carId = carId;
         this.newX = newX;
         this.newY = newY;
     }
 
-    public GameStateChange() {
+    public GameStateCarChange() {
     }
 
     public String getCarId() {

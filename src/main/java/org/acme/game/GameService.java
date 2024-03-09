@@ -20,7 +20,6 @@ public class GameService {
     Event<GameEventMessage> gameEvent;
 
     public void triggerEvent(GameEventMessage event) {
-        System.out.println("Triggering event: " + event);
         gameEvent.fire(event);
     }
     private final Map gameMap;
@@ -30,6 +29,18 @@ public class GameService {
         // Ici, vous pouvez initialiser la carte du jeu, les voitures, etc.
         List<Wall> walls = new ArrayList<>();
         walls.add(new Wall(100, 100, 200, 20));
+        walls.add(new Wall(400, 100, 20, 200));
+        walls.add(new Wall(100, 300, 200, 20));
+        walls.add(new Wall(100, 300, 20, 200));
+        walls.add(new Wall(100, 500, 200, 20));
+        walls.add(new Wall(400, 500, 20, 200));
+        walls.add(new Wall(400, 700, 200, 20));
+        walls.add(new Wall(600, 500, 20, 200));
+        walls.add(new Wall(600, 300, 200, 20));
+        walls.add(new Wall(800, 300, 20, 200));
+        walls.add(new Wall(800, 100, 200, 20));
+        walls.add(new Wall(1000, 100, 20, 200));
+
         gameMap = new Map(walls, new ArrayList<>());
 
         // Ajout de pièces

@@ -77,7 +77,6 @@ public class WebSocketServer {
         try {
             ObjectMapper mapper = new ObjectMapper();
             jsonMessage = mapper.writeValueAsString(message);
-            System.out.println("Broadcasting message: " + jsonMessage);
         } catch (JsonProcessingException e) {
             System.err.println("Erreur lors de la conversion du message en JSON : " + e.getMessage());
             jsonMessage = "{\"error\":\"Problème interne du serveur\"}";

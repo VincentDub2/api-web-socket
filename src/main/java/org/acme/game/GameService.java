@@ -147,7 +147,7 @@ public class GameService {
         }
     }
 
-    private Car findCarById(String id) {
+    public Car findCarById(String id) {
         return cars.stream().filter(car -> car.getId().equals(id)).findFirst().orElse(null);
     }
 

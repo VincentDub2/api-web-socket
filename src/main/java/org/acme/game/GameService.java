@@ -24,6 +24,11 @@ public class GameService {
     }
     private final Map gameMap;
     private final List<Car> cars = new ArrayList<>();
+    
+    // Setter pour l'injection/mock de gameEvent dans les tests
+    public void setGameEvent(Event<GameEventMessage> gameEvent) {
+        this.gameEvent = gameEvent;
+    }
 
     public GameService() {
         // Ici, vous pouvez initialiser la carte du jeu, les voitures, etc.
@@ -142,7 +147,7 @@ public class GameService {
         }
     }
 
-    private Car findCarById(String id) {
+    public Car findCarById(String id) {
         return cars.stream().filter(car -> car.getId().equals(id)).findFirst().orElse(null);
     }
 

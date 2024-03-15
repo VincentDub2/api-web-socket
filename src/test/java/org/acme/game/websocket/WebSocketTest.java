@@ -1,4 +1,4 @@
-package org.acme.websocket;
+package org.acme.game.websocket;
 
 import org.junit.jupiter.api.Test;
 import java.net.URI;

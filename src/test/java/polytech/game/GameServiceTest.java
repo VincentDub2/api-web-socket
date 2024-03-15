@@ -1,8 +1,8 @@
 package polytech.game;
 
 import jakarta.enterprise.event.Event;
-import org.acme.game.models.*;
-import org.acme.game.models.gameEvent.GameEventMessage;
+import polytech.game.models.*;
+import polytech.game.models.gameEvent.GameEventMessage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;

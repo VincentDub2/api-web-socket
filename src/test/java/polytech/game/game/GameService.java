@@ -5,8 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
-import org.acme.game.models.*;
-import org.acme.game.models.gameEvent.*;
+import polytech.game.game.models.*;
+import polytech.game.models.gameEvent.*;
 
 import java.awt.*;
 import java.util.ArrayList;

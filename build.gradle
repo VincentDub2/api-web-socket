@@ -15,6 +15,7 @@ dependencies {
     implementation 'io.quarkus:quarkus-websockets'
     implementation 'io.quarkus:quarkus-kubernetes'
     implementation 'io.quarkus:quarkus-arc'
+    testImplementation group: 'org.mockito', name: 'mockito-core', version: '2.1.0'
     testImplementation 'io.quarkus:quarkus-junit5'
     testImplementation 'io.rest-assured:rest-assured'
 }

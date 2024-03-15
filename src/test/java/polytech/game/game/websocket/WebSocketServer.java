@@ -8,10 +8,10 @@ import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import jakarta.websocket.*;
 import jakarta.websocket.server.ServerEndpoint;
-import org.acme.game.GameService;
-import org.acme.game.models.Car;
-import org.acme.game.models.GameStateCarChange;
-import org.acme.game.models.gameEvent.GameEventMessage;
+import polytech.game.GameService;
+import polytech.game.models.Car;
+import polytech.game.models.GameStateCarChange;
+import polytech.game.models.gameEvent.GameEventMessage;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

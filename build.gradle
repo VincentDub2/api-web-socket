@@ -15,6 +15,8 @@ dependencies {
     implementation 'io.quarkus:quarkus-websockets'
     implementation 'io.quarkus:quarkus-kubernetes'
     implementation 'io.quarkus:quarkus-arc'
+    // https://mvnrepository.com/artifact/jakarta.inject/jakarta.inject-api
+    implementation group: 'jakarta.inject', name: 'jakarta.inject-api', version: '2.0.1'
     testImplementation group: 'org.mockito', name: 'mockito-core', version: '2.1.0'
     testImplementation 'io.quarkus:quarkus-junit5'
     testImplementation 'io.rest-assured:rest-assured'

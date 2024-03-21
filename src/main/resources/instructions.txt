@@ -1,0 +1,3 @@
+car right 5
+car left 3
+car right 5

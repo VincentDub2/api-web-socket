@@ -5,8 +5,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
-import jakarta.inject.Inject;
 import jakarta.websocket.*;
+import jakarta.inject.Inject;
 import jakarta.websocket.server.ServerEndpoint;
 import polytech.game.GameService;
 import polytech.game.models.Car;
@@ -20,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @ApplicationScoped
 public class WebSocketServer {
 
+    public ObjectMapper mapper;
     Map<String, Session> sessions = new ConcurrentHashMap<>();
     @Inject
     GameService gameService;

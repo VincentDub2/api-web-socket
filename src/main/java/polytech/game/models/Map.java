@@ -1,7 +1,7 @@
 package polytech.game.models;
 import java.util.List;
 
-public record Map(List<Wall> walls, List<Coin> coins) {
+public record Map(List<Wall> walls, List<Coin> coins,List<Mushroom> mushrooms) {
 
     public boolean isWall(int x, int y) {
         for (Wall wall : walls) {
@@ -14,6 +14,10 @@ public record Map(List<Wall> walls, List<Coin> coins) {
 
     public List<Wall> getWalls() {
         return walls;
+    }
+
+    public List<Mushroom> getMushrooms() {
+        return mushrooms;
     }
 
     public List<Coin> getCoins() {
@@ -29,12 +33,23 @@ public record Map(List<Wall> walls, List<Coin> coins) {
         return false;
     }
 
-    public void setCoinCollected(int x, int y, boolean collected) {
-        for (Coin coin : coins) {
-            if (coin.getX() == x && coin.getY() == y) {
-                coin.setCollected(collected);
+    public boolean isMushroom(int x, int y) {
+        for (Mushroom mushroom : mushrooms) {
+            if (mushroom.getX() == x && mushroom.getY() == y && !mushroom.isCollected()) {
+                return true;
             }
         }
+        return false;
+    }
+
+    public void setMushroomCollected(int x, int y, boolean collected) {
+        if (collected) {
+            mushrooms.removeIf(mushroom -> mushroom.getX() == x && mushroom.getY() == y && !mushroom.isCollected());
+        }
+    }
+
+    public void setCoinCollected(int x, int y) {
+        coins.removeIf(coin -> coin.getX() == x && coin.getY() == y);
     }
 
 }

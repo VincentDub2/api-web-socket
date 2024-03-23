@@ -14,13 +14,18 @@ public class MapTest {
     private List<Wall> walls;
     private List<Coin> coins;
 
+    private List<Mushroom> mushrooms;
+
     @BeforeEach
     public void setup() {
         walls = new ArrayList<>();
         coins = new ArrayList<>();
+        mushrooms = new ArrayList<>();
         walls.add(new Wall(100, 100, 10, 10)); // Hypothetical Wall constructor
         coins.add(new Coin(200, 200));
-        map = new Map(walls, coins);
+        mushrooms.add(new Mushroom(300, 300));
+
+        map = new Map(walls, coins, mushrooms);
     }
 
     @Test
@@ -44,7 +49,7 @@ public class MapTest {
     @Test
     public void testSetCoinCollected() {
         assertFalse(coins.get(0).isCollected());
-        map.setCoinCollected(200, 200, true);
-        assertTrue(coins.get(0).isCollected());
+        map.setCoinCollected(200, 200);
+        assertTrue(coins.get(0) == null || coins.get(0).isCollected());
     }
 }

@@ -11,6 +11,8 @@ import polytech.game.models.gameEvent.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 @ApplicationScoped
 public class GameService {
@@ -45,13 +47,22 @@ public class GameService {
         walls.add(new Wall(800, 100, 200, 20));
         walls.add(new Wall(1000, 100, 20, 200));
 
-        gameMap = new Map(walls, new ArrayList<>());
+        gameMap = new Map(walls, new ArrayList<>(), new ArrayList<>());
 
-        // Ajout de pièces
-        for (int i = 0; i < 10; i++) {
-            gameMap.coins().add(new Coin((int) (Math.random() * 800), (int) (Math.random() * 600)));
+        scheduleMushroomSpawns();
+        sheduleCoinSpawns();
+
+
+    }
+
+    public boolean isInWall(int x, int y) {
+        for (Wall wall : gameMap.getWalls()) {
+            Rectangle wallHitbox = new Rectangle(wall.getX(), wall.getY(), wall.getWidth(), wall.getHeight());
+            if (wallHitbox.contains(x, y)) {
+                return true;
+            }
         }
-
+        return false;
     }
 
     public Car addNewCar(String id) {
@@ -67,52 +78,93 @@ public class GameService {
     public synchronized void moveCar(String carId, int direction) {
         Car car = findCarById(carId);
         if (car != null) {
-            int newX = car.getX();
-            int newY = car.getY();
+            final int steps = car.getSpeed() / 2; // Nombre d'étapes basé sur la vitesse, ajustez selon vos besoins
+            final int singleStepDistance = 4; // Distance parcourue à chaque étape, ajustez selon vos besoins
 
-            // Calcule la nouvelle position en fonction de la direction et de la vitesse
-            switch (direction) {
-                case 0: newY -= car.getSpeed(); break;
-                case 1: newX += car.getSpeed(); break;
-                case 2: newY += car.getSpeed(); break;
-                case 3: newX -= car.getSpeed(); break;
-            }
+            for (int i = 0; i < steps; i++) {
+                // Calculez la nouvelle position pour chaque étape
+                int deltaX = 0;
+                int deltaY = 0;
+                switch (direction) {
+                    case 0: deltaY -= singleStepDistance; break;
+                    case 1: deltaX += singleStepDistance; break;
+                    case 2: deltaY += singleStepDistance; break;
+                    case 3: deltaX -= singleStepDistance; break;
+                }
+                updatePosition(car, deltaX, deltaY); // Mettre à jour la position et vérifier les collisions
+                sendPositionUpdate(car); // Envoyer la mise à jour au front-end
 
-            Rectangle futureHitbox = new Rectangle(newX, newY,car.getWidth(),car.getHeight());
-
-            for (Wall wall : gameMap.getWalls()) {
-                Rectangle wallHitbox = new Rectangle(wall.getX(), wall.getY(), wall.getWidth(), wall.getHeight());
-                if (intersects(futureHitbox, wallHitbox)) {
-                    System.out.println("Car hit a wall");
-                return;
+                try {
+                    Thread.sleep(10); // Attendez un peu avant de faire le prochain pas pour simuler la vitesse, ajustez selon vos besoins
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return;
                 }
             }
-
-            for (Coin coin : gameMap.getCoins()) {
-                if (coin.isCollected()) {
-                    continue;
-                }
-                Rectangle coinHitbox = new Rectangle(coin.getX(), coin.getY(), coin.getWidth(), coin.getHeight());
-                if (intersects(futureHitbox, coinHitbox)) {
-                    System.out.println("Car collected a coin");
-                    CoinCollectionData coinCollectionData = new CoinCollectionData(coin.getId(),true);
-                    CoinCollectionEvent coinCollectionEvent = new CoinCollectionEvent(coinCollectionData);
-                    triggerEvent(coinCollectionEvent);
-                    coin.setCollected(true);
-                    car.setScore(car.getScore() + 1);
-
-                }
-            }
-
-            car.setX(newX);
-            car.setY(newY);
-
-            MovementData movementData = new MovementData(carId, newX, newY, car.getScore());
-            MovementEvent movementEvent = new MovementEvent(movementData);
-            triggerEvent(movementEvent);
-
         }
     }
+
+    private void updatePosition(Car car, int deltaX, int deltaY) {
+        int newX = car.getX() + deltaX;
+        int newY = car.getY() + deltaY;
+
+        Rectangle futureHitbox = new Rectangle(newX, newY,car.getWidth(),car.getHeight());
+
+        for (Wall wall : gameMap.getWalls()) {
+            Rectangle wallHitbox = new Rectangle(wall.getX(), wall.getY(), wall.getWidth(), wall.getHeight());
+            if (intersects(futureHitbox, wallHitbox)) {
+                System.out.println("Car hit a wall");
+                return;
+            }
+        }
+
+        for (Coin coin : gameMap.getCoins()) {
+            if (coin.isCollected()) {
+                continue;
+            }
+            Rectangle coinHitbox = new Rectangle(coin.getX(), coin.getY(), coin.getWidth(), coin.getHeight());
+            if (intersects(futureHitbox, coinHitbox)) {
+                System.out.println("Car collected a coin");
+                CoinCollectionData coinCollectionData = new CoinCollectionData(coin.getId(),true);
+                CoinCollectionEvent coinCollectionEvent = new CoinCollectionEvent(coinCollectionData);
+                triggerEvent(coinCollectionEvent);
+                gameMap.setCoinCollected(coin.getX(), coin.getY());
+                car.setScore(car.getScore() + 1);
+
+            }
+        }
+
+        for (Mushroom mushroom : gameMap.getMushrooms()) {
+            if (mushroom.isCollected()) {
+                continue;
+            }
+            Rectangle mushroomHitbox = new Rectangle(mushroom.getX(), mushroom.getY(), mushroom.getWidth(), mushroom.getHeight());
+            if (intersects(futureHitbox, mushroomHitbox)) {
+                mushroom.setCollected(true);
+                car.setSpeed(car.getSpeed() + 10); // Assume SPEED_BOOST est une constante définie
+
+                MushroomCollectionData mushroomCollectionData = new MushroomCollectionData(mushroom.getId(),true);
+                MushroomCollectionEvent mushroomCollectionEvent = new MushroomCollectionEvent(mushroomCollectionData);
+                triggerEvent(mushroomCollectionEvent);
+                new Timer().schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        car.setSpeed(car.getSpeed() - 10);
+                    }
+                }, 4000); // Réinitialiser la vitesse après 4 secondes
+            }
+        }
+
+        car.setX(newX);
+        car.setY(newY);
+    }
+
+    private void sendPositionUpdate(Car car) {
+        MovementData movementData = new MovementData(car.getId(), car.getX(), car.getY(), car.getScore());
+        MovementEvent movementEvent = new MovementEvent(movementData);
+        triggerEvent(movementEvent);
+    }
+
 
     public boolean intersects(Rectangle r1, Rectangle r2) {
         return r1.x < r2.x + r2.width && r1.x + r1.width > r2.x &&
@@ -150,4 +202,71 @@ public class GameService {
         return cars.stream().filter(car -> car.getId().equals(id)).findFirst().orElse(null);
     }
 
+    private void scheduleMushroomSpawns() {
+        Timer timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                if (gameMap.getMushrooms().size() < 3) {
+                    generateMushroom();
+                }
+            }
+        }, 0, 10000); // Exemple : toutes les 10 secondes
+    }
+
+    private void generateMushroom() {
+        // Utilisation d'un thread séparé pour la génération des champignons
+        new Thread(() -> {
+            Mushroom mushroom = new Mushroom((int) (Math.random() * 800), (int) (Math.random() * 600));
+            do {
+                mushroom.setX((int) (Math.random() * 800));
+                mushroom.setY((int) (Math.random() * 600));
+            } while (isInWall(mushroom.getX(), mushroom.getY()));
+
+            // Assurez-vous que l'ajout du champignon à la liste est thread-safe
+            synchronized (gameMap.getMushrooms()) {
+                gameMap.getMushrooms().add(mushroom);
+            }
+
+            MushroomAddData mushroomAddData = new MushroomAddData(mushroom.getId(), mushroom.getX(), mushroom.getY());
+            MushroomAddEvent mushroomAddEvent = new MushroomAddEvent(mushroomAddData);
+            triggerEvent(mushroomAddEvent);
+        }).start();
+    }
+
+    private void sheduleCoinSpawns() {
+        Timer timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                if (gameMap.getCoins().size() < 5) {
+                    generateCoin();
+                }
+            }
+        }, 0, 5000); // Exemple : toutes les 5 secondes
+    }
+
+    private void generateCoin() {
+        // Utilisation d'un thread séparé pour la génération des pièces
+        new Thread(() -> {
+            Coin coin = new Coin((int) (Math.random() * 800), (int) (Math.random() * 600));
+            do {
+                coin.setX((int) (Math.random() * 800));
+                coin.setY((int) (Math.random() * 600));
+            } while (isInWall(coin.getX(), coin.getY()));
+
+            // Assurez-vous que l'ajout de la pièce à la liste est thread-safe
+            synchronized (gameMap.getCoins()) {
+                gameMap.getCoins().add(coin);
+            }
+
+            CoinAddData coinAddData = new CoinAddData(coin.getId(), coin.getX(), coin.getY());
+            CoinAddEvent coinAddEvent = new CoinAddEvent(coinAddData);
+            triggerEvent(coinAddEvent);
+        }).start();
+    }
+
 }
+
+
+

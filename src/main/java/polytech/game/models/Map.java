@@ -42,10 +42,9 @@ public record Map(List<Wall> walls, List<Coin> coins,List<Mushroom> mushrooms) {
         return false;
     }
 
-    public void setMushroomCollected(int x, int y, boolean collected) {
-        if (collected) {
-            mushrooms.removeIf(mushroom -> mushroom.getX() == x && mushroom.getY() == y && !mushroom.isCollected());
-        }
+    public void setMushroomCollected(int x, int y) {
+        mushrooms.removeIf(mushroom -> mushroom.getX() == x && mushroom.getY() == y);
+
     }
 
     public void setCoinCollected(int x, int y) {

@@ -92,6 +92,6 @@ public class Car {
         this.direction = 0; // Initial direction facing north
         this.score = 0;
         this.width = 30;
-        this.height = 25;
+        this.height = 36;
     }
 }

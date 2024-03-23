@@ -4,15 +4,19 @@ public class InitialGameState {
     private List<Car> cars;
     private List<Wall> walls;
     private List<Coin> coins;
+
+    private List<Mushroom> mushrooms;
+
     private Car playerCar;
     public InitialGameState() {
     }
 
-    public InitialGameState(List<Car> cars, List<Wall> walls, List<Coin> coins, Car playerCar) {
+    public InitialGameState(List<Car> cars, List<Wall> walls, List<Coin> coins, Car playerCar, List<Mushroom> mushrooms) {
         this.cars = cars;
         this.walls = walls;
         this.coins = coins;
         this.playerCar = playerCar;
+        this.mushrooms = mushrooms;
     }
 
     public List<Car> getCars() {
@@ -21,6 +25,14 @@ public class InitialGameState {
 
     public List<Wall> getWalls() {
         return walls;
+    }
+
+    public List<Mushroom> getMushrooms() {
+        return mushrooms;
+    }
+
+    public void setMushrooms(List<Mushroom> mushrooms) {
+        this.mushrooms = mushrooms;
     }
 
     public List<Coin> getCoins() {

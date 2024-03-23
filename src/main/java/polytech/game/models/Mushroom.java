@@ -10,7 +10,7 @@ public class Mushroom {
     private int x;
     private int y;
 
-    private static final int WIDTH = 5, HEIGHT = 5;
+    private static final int WIDTH = 21, HEIGHT = 24;
 
 
     private boolean collected;

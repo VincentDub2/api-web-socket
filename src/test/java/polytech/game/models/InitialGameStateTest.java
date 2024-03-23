@@ -20,6 +20,7 @@ public class InitialGameStateTest {
         List<Car> cars = new ArrayList<>();
         List<Coin> coins = new ArrayList<>();
         List<Wall> walls = new ArrayList<>();
+        List<Mushroom> mushrooms = new ArrayList<>();
 
         car = new Car("car1", 100, 200);
         coin = new Coin(10, 20);
@@ -29,7 +30,8 @@ public class InitialGameStateTest {
         coins.add(coin);
         walls.add(wall);
 
-        initialGameState = new InitialGameState(cars, walls, coins, car);
+
+        initialGameState = new InitialGameState(cars, walls, coins, car, mushrooms);
     }
 
     @Test

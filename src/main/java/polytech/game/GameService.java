@@ -47,7 +47,7 @@ public class GameService {
         walls.add(new Wall(800, 100, 200, 20));
         walls.add(new Wall(1000, 100, 20, 200));
 
-        gameMap = new Map(walls, new ArrayList<>(), new ArrayList<>());
+        gameMap = new Map(walls, new ArrayList<>(),new ArrayList<>());
 
         scheduleMushroomSpawns();
         sheduleCoinSpawns();
@@ -55,20 +55,30 @@ public class GameService {
 
     }
 
-    public boolean isInWall(int x, int y) {
-        for (Wall wall : gameMap.getWalls()) {
-            Rectangle wallHitbox = new Rectangle(wall.getX(), wall.getY(), wall.getWidth(), wall.getHeight());
-            if (wallHitbox.contains(x, y)) {
-                return true;
-            }
-        }
-        return false;
-    }
 
     public Car addNewCar(String id) {
-        Car car = new Car(id,(int) (Math.random() * 800),(int) (Math.random() * 600));
-        cars.add(car);
-        return car;
+        final int MAX_ATTEMPTS = 1000; // Limite le nombre de tentatives pour éviter une boucle infinie
+        for (int attempts = 0; attempts < MAX_ATTEMPTS; attempts++) {
+            int x = (int) (Math.random() * 800);
+            int y = (int) (Math.random() * 600);
+            Car car = new Car(id, x, y);
+            Rectangle futureHitbox = new Rectangle(x, y, car.getWidth(), car.getHeight());
+            boolean isValid = true;
+            for (Wall wall : gameMap.getWalls()) {
+                Rectangle wallHitbox = new Rectangle(wall.getX(), wall.getY(), wall.getWidth(), wall.getHeight());
+                if (intersects(futureHitbox, wallHitbox)) {
+                    isValid = false;
+                    break; // Dès qu'une intersection est trouvée, arrête la vérification
+                }
+            }
+            if (isValid) {
+                cars.add(car); // Assurez-vous d'ajouter la voiture à la liste des voitures
+                return car;
+            }
+        }
+        // Si aucune position valide n'est trouvée après le nombre maximal de tentatives
+        System.err.println("Impossible de placer une nouvelle voiture après " + MAX_ATTEMPTS + " tentatives.");
+        return null; // Ou gérer autrement, selon la logique de votre application
     }
 
     public void removeCar(String id) {
@@ -124,12 +134,7 @@ public class GameService {
             }
             Rectangle coinHitbox = new Rectangle(coin.getX(), coin.getY(), coin.getWidth(), coin.getHeight());
             if (intersects(futureHitbox, coinHitbox)) {
-                System.out.println("Car collected a coin");
-                CoinCollectionData coinCollectionData = new CoinCollectionData(coin.getId(),true);
-                CoinCollectionEvent coinCollectionEvent = new CoinCollectionEvent(coinCollectionData);
-                triggerEvent(coinCollectionEvent);
-                gameMap.setCoinCollected(coin.getX(), coin.getY());
-                car.setScore(car.getScore() + 1);
+                collectCoin(coin, car);
 
             }
         }
@@ -140,18 +145,7 @@ public class GameService {
             }
             Rectangle mushroomHitbox = new Rectangle(mushroom.getX(), mushroom.getY(), mushroom.getWidth(), mushroom.getHeight());
             if (intersects(futureHitbox, mushroomHitbox)) {
-                mushroom.setCollected(true);
-                car.setSpeed(car.getSpeed() + 10); // Assume SPEED_BOOST est une constante définie
-
-                MushroomCollectionData mushroomCollectionData = new MushroomCollectionData(mushroom.getId(),true);
-                MushroomCollectionEvent mushroomCollectionEvent = new MushroomCollectionEvent(mushroomCollectionData);
-                triggerEvent(mushroomCollectionEvent);
-                new Timer().schedule(new TimerTask() {
-                    @Override
-                    public void run() {
-                        car.setSpeed(car.getSpeed() - 10);
-                    }
-                }, 4000); // Réinitialiser la vitesse après 4 secondes
+                collectMushroom(mushroom, car);
             }
         }
 
@@ -185,6 +179,8 @@ public class GameService {
 
         initialState.setCoins(gameMap.coins());
 
+        initialState.setMushrooms(gameMap.mushrooms());
+
         initialState.setPlayerCar(findCarById(sessionId));
 
         // Sérialisation en JSON
@@ -207,7 +203,7 @@ public class GameService {
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                if (gameMap.getMushrooms().size() < 3) {
+                if (gameMap.getMushrooms().size() < 2) {
                     generateMushroom();
                 }
             }
@@ -215,22 +211,31 @@ public class GameService {
     }
 
     private void generateMushroom() {
-        // Utilisation d'un thread séparé pour la génération des champignons
         new Thread(() -> {
-            Mushroom mushroom = new Mushroom((int) (Math.random() * 800), (int) (Math.random() * 600));
-            do {
-                mushroom.setX((int) (Math.random() * 800));
-                mushroom.setY((int) (Math.random() * 600));
-            } while (isInWall(mushroom.getX(), mushroom.getY()));
+            int x = (int) (Math.random() * 800);
+            int y = (int) (Math.random() * 600);
+            Mushroom mushroom = new Mushroom(x, y);
+            Rectangle futureHitbox = new Rectangle(x, y, mushroom.getWidth(), mushroom.getHeight());
+            boolean isPlaced = false;
 
-            // Assurez-vous que l'ajout du champignon à la liste est thread-safe
-            synchronized (gameMap.getMushrooms()) {
-                gameMap.getMushrooms().add(mushroom);
+            for (Wall wall : gameMap.getWalls()) {
+                Rectangle wallHitbox = new Rectangle(wall.getX(), wall.getY(), wall.getWidth(), wall.getHeight());
+                if (!intersects(futureHitbox, wallHitbox)) {
+                    isPlaced = true;
+                    break;
+                }
             }
 
-            MushroomAddData mushroomAddData = new MushroomAddData(mushroom.getId(), mushroom.getX(), mushroom.getY());
-            MushroomAddEvent mushroomAddEvent = new MushroomAddEvent(mushroomAddData);
-            triggerEvent(mushroomAddEvent);
+            if (isPlaced) {
+                // Assurez-vous que l'ajout du champignon à la liste est thread-safe
+                synchronized (gameMap.getMushrooms()) {
+                    gameMap.getMushrooms().add(mushroom);
+                }
+
+                MushroomAddData mushroomAddData = new MushroomAddData(mushroom.getId(), mushroom.getX(), mushroom.getY());
+                MushroomAddEvent mushroomAddEvent = new MushroomAddEvent(mushroomAddData);
+                triggerEvent(mushroomAddEvent);
+            }
         }).start();
     }
 
@@ -247,23 +252,65 @@ public class GameService {
     }
 
     private void generateCoin() {
-        // Utilisation d'un thread séparé pour la génération des pièces
         new Thread(() -> {
-            Coin coin = new Coin((int) (Math.random() * 800), (int) (Math.random() * 600));
-            do {
-                coin.setX((int) (Math.random() * 800));
-                coin.setY((int) (Math.random() * 600));
-            } while (isInWall(coin.getX(), coin.getY()));
+            int x = (int) (Math.random() * 800);
+            int y = (int) (Math.random() * 600);
+            Coin coin = new Coin(x, y);
+            Rectangle futureHitbox = new Rectangle(x, y, coin.getWidth(), coin.getHeight());
+            boolean isPlaced = false;
 
-            // Assurez-vous que l'ajout de la pièce à la liste est thread-safe
-            synchronized (gameMap.getCoins()) {
-                gameMap.getCoins().add(coin);
+            for (Wall wall : gameMap.getWalls()) {
+                Rectangle wallHitbox = new Rectangle(wall.getX(), wall.getY(), wall.getWidth(), wall.getHeight());
+                if (!intersects(futureHitbox, wallHitbox)) {
+                    isPlaced = true;
+                    break;
+                }
             }
 
-            CoinAddData coinAddData = new CoinAddData(coin.getId(), coin.getX(), coin.getY());
-            CoinAddEvent coinAddEvent = new CoinAddEvent(coinAddData);
-            triggerEvent(coinAddEvent);
+            if (isPlaced) {
+                synchronized (gameMap.getCoins()) {
+                    gameMap.getCoins().add(coin);
+                }
+
+                CoinAddData coinAddData = new CoinAddData(coin.getId(), coin.getX(), coin.getY());
+                CoinAddEvent coinAddEvent = new CoinAddEvent(coinAddData);
+                triggerEvent(coinAddEvent);
+            }
         }).start();
+    }
+
+    private void collectCoin(Coin coin, Car car) {
+        synchronized (gameMap.getCoins()) {
+            if (!coin.isCollected()) {
+                coin.setCollected(true);
+                gameMap.setCoinCollected(coin.getX(), coin.getY());
+                car.setScore(car.getScore() + 1);
+                CoinCollectionData coinCollectionData = new CoinCollectionData(coin.getId(), true);
+                CoinCollectionEvent coinCollectionEvent = new CoinCollectionEvent(coinCollectionData);
+                triggerEvent(coinCollectionEvent);
+            }
+        }
+    }
+
+    private void collectMushroom(Mushroom mushroom, Car car) {
+        synchronized (gameMap.getMushrooms()) {
+            if (!mushroom.isCollected()) {
+                mushroom.setCollected(true);
+                gameMap.setMushroomCollected(mushroom.getX(), mushroom.getY());
+                car.setSpeed(car.getSpeed() + 10);
+                new Timer().schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        car.setSpeed(car.getSpeed() - 10);
+                    }
+                }, 4000); // Réinitialiser la vitesse après 4 secondes
+                // ; // Assume SPEED_BOOST est une constante définie
+
+                MushroomCollectionData mushroomCollectionData = new MushroomCollectionData(mushroom.getId(), true);
+                MushroomCollectionEvent mushroomCollectionEvent = new MushroomCollectionEvent(mushroomCollectionData);
+                triggerEvent(mushroomCollectionEvent);
+            }
+        }
     }
 
 }

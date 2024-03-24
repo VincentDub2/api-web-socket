@@ -88,7 +88,7 @@ public class Car {
         this.id = id;
         this.x = x;
         this.y = y;
-        this.speed = 20; // Initial speed
+        this.speed = 8; // Initial speed
         this.direction = 0; // Initial direction facing north
         this.score = 0;
         this.width = 30;

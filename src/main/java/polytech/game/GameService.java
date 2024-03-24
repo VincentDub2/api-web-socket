@@ -40,12 +40,12 @@ public class GameService {
         walls.add(new Wall(100, 300, 20, 200));
         walls.add(new Wall(100, 500, 200, 20));
         walls.add(new Wall(400, 500, 20, 200));
-        walls.add(new Wall(400, 700, 200, 20));
+        walls.add(new Wall(400, 700, 220, 20));
         walls.add(new Wall(600, 500, 20, 200));
         walls.add(new Wall(600, 300, 200, 20));
         walls.add(new Wall(800, 300, 20, 200));
         walls.add(new Wall(800, 100, 200, 20));
-        walls.add(new Wall(1000, 100, 20, 200));
+        walls.add(new Wall(980, 100, 20, 200));
 
         gameMap = new Map(walls, new ArrayList<>(),new ArrayList<>());
 
@@ -88,24 +88,24 @@ public class GameService {
     public synchronized void moveCar(String carId, int direction) {
         Car car = findCarById(carId);
         if (car != null) {
-            final int steps = car.getSpeed() / 2; // Nombre d'étapes basé sur la vitesse, ajustez selon vos besoins
-            final int singleStepDistance = 4; // Distance parcourue à chaque étape, ajustez selon vos besoins
+            final int steps = car.getSpeed() / 4; // Nombre d'étapes basé sur la vitesse, ajustez selon vos besoins
+            // Distance parcourue à chaque étape, ajustez selon vos besoins
 
             for (int i = 0; i < steps; i++) {
                 // Calculez la nouvelle position pour chaque étape
                 int deltaX = 0;
                 int deltaY = 0;
                 switch (direction) {
-                    case 0: deltaY -= singleStepDistance; break;
-                    case 1: deltaX += singleStepDistance; break;
-                    case 2: deltaY += singleStepDistance; break;
-                    case 3: deltaX -= singleStepDistance; break;
+                    case 0: deltaY -= car.getSpeed(); break;
+                    case 1: deltaX += car.getSpeed(); break;
+                    case 2: deltaY += car.getSpeed(); break;
+                    case 3: deltaX -= car.getSpeed(); break;
                 }
                 updatePosition(car, deltaX, deltaY); // Mettre à jour la position et vérifier les collisions
                 sendPositionUpdate(car); // Envoyer la mise à jour au front-end
 
                 try {
-                    Thread.sleep(10); // Attendez un peu avant de faire le prochain pas pour simuler la vitesse, ajustez selon vos besoins
+                    Thread.sleep(30); // Attendez un peu avant de faire le prochain pas pour simuler la vitesse, ajustez selon vos besoins
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     return;
@@ -120,18 +120,18 @@ public class GameService {
 
         Rectangle futureHitbox = new Rectangle(newX, newY,car.getWidth(),car.getHeight());
 
+        // Vérifiez les collisions avec les murs, les pièces de monnaie, les champignons, etc.
+
+        //Verifier les collisions avec les murs
+
         for (Wall wall : gameMap.getWalls()) {
             Rectangle wallHitbox = new Rectangle(wall.getX(), wall.getY(), wall.getWidth(), wall.getHeight());
             if (intersects(futureHitbox, wallHitbox)) {
-                System.out.println("Car hit a wall");
                 return;
             }
         }
 
         for (Coin coin : gameMap.getCoins()) {
-            if (coin.isCollected()) {
-                continue;
-            }
             Rectangle coinHitbox = new Rectangle(coin.getX(), coin.getY(), coin.getWidth(), coin.getHeight());
             if (intersects(futureHitbox, coinHitbox)) {
                 collectCoin(coin, car);
@@ -149,8 +149,15 @@ public class GameService {
             }
         }
 
+        //Vérifier que la voiture ne sort pas de la carte
+        if (newX < 0 || newX + car.getWidth() > 1000 || newY < 0 || newY + car.getHeight() > 800) {
+            System.out.println("Car out of bounds");
+            return;
+        }
+
         car.setX(newX);
         car.setY(newY);
+
     }
 
     private void sendPositionUpdate(Car car) {
@@ -227,7 +234,6 @@ public class GameService {
             }
 
             if (isPlaced) {
-                // Assurez-vous que l'ajout du champignon à la liste est thread-safe
                 synchronized (gameMap.getMushrooms()) {
                     gameMap.getMushrooms().add(mushroom);
                 }

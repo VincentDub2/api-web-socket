@@ -52,6 +52,29 @@ class GameServiceTest {
         gameService.removeCar("movingCar");
     }
 
+    /**
+     * Verifacation de la voiture ne sort pas de la carte
+     */
+
+    @Test
+    public void testMoveCarBoundaries() {
+        Car car = gameService.addNewCar("movingCar");
+        car.setX(0);
+        car.setY(0);
+        int initialX = car.getX();
+        int initialY = car.getY();
+
+        gameService.moveCar("movingCar", 3); // Assume 3 means moving west
+
+        // Check if car has not moved west
+        assertEquals(initialX, car.getX());
+        assertEquals(initialY, car.getY());
+
+        // Cleanup
+        gameService.removeCar("movingCar");
+    }
+
+
     @Test
     void initialStateSerialization() {
         String sessionId = "testSession";

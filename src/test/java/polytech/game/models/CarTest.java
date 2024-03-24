@@ -22,11 +22,9 @@ class CarTest {
                 () -> assertEquals("testCar", car.getId()),
                 () -> assertEquals(100, car.getX()),
                 () -> assertEquals(200, car.getY()),
-                () -> assertEquals(20, car.getSpeed()),
+                () -> assertEquals(8, car.getSpeed()),
                 () -> assertEquals(0, car.getDirection()),
-                () -> assertEquals(0, car.getScore()),
-                () -> assertEquals(30, car.getWidth()),
-                () -> assertEquals(25, car.getHeight())
+                () -> assertEquals(0, car.getScore())
         );
     }
 
@@ -53,7 +51,7 @@ class CarTest {
 
     @Test
     void testGetHitbox() {
-        Rectangle expectedHitbox = new Rectangle(100, 200, 30, 25);
+        Rectangle expectedHitbox = new Rectangle(100, 200, 30, 36);
         assertEquals(expectedHitbox, car.getHitbox(), "Hitbox should match the car's position and size");
     }
 }

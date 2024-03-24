@@ -50,6 +50,6 @@ public class MapTest {
     public void testSetCoinCollected() {
         assertFalse(coins.get(0).isCollected());
         map.setCoinCollected(200, 200);
-        assertTrue(coins.get(0) == null || coins.get(0).isCollected());
+        assertTrue(coins.isEmpty() || coins.get(0).isCollected());
     }
 }

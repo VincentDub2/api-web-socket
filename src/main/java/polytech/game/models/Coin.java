@@ -10,9 +10,9 @@ public class Coin {
     private int x;
     private int y;
 
-    private final int width = 2;
+    private final int width = 21;
 
-    private final int height = 2;
+    private final int height = 24;
 
 
     private boolean collected;

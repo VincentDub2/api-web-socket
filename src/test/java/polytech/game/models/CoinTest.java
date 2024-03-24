@@ -23,6 +23,6 @@ public class CoinTest {
         Coin coin = new Coin(100, 200);
         Rectangle hitbox = coin.getHitbox();
         assertNotNull(hitbox);
-        assertEquals(new Rectangle(100, 200, 2, 2), hitbox);
+        assertEquals(new Rectangle(100, 200, 21, 24), hitbox);
     }
 }
